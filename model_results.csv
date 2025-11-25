@@ -1,0 +1,6 @@
+model,mse,mae,mape
+XGBboost,0.008215,0.065995,13.647513
+LinearRegression,0.009729,0.076374,15.701838
+NN with tensorflow,0.020474,0.116584,33.343274
+NN from zero,0.010728,0.075474,24.866314
+NN from zero with sigmoid,0.010728,0.075474,24.866314

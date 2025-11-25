@@ -1,0 +1,4 @@
+model,mse,mae,mape
+Dataset2 XGBoost,0.001269,0.018121,7.68449
+NN from zero with tanh,0.003625,0.038908,65.310331
+NN from zero with relu,0.00231,0.030091,68.182598

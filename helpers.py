@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from sklearn.metrics import  mean_squared_error, mean_absolute_error
+from sklearn.metrics import  mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 
 from NeuralNet import NeuralNet
 
@@ -46,7 +46,7 @@ def get_prediction(name, model, X_test, y_test, y_train, metrics, show_predictio
     # Metrics
     mse  = mean_squared_error(y_true, y_pred)
     mae  = mean_absolute_error(y_true, y_pred)
-    mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+    mape = mean_absolute_percentage_error(y_true, y_pred)
 
     # Print rounded values
     print("MSE:", round(mse, 6))
@@ -69,3 +69,14 @@ def show_prediction_vs_real_values(y_pred, y_true, y_test):
     plt.ylabel('Predicted values')
     plt.title('Real vs Predicted values')
     plt.show()
+
+def show_loss(nn, X_test):
+    train_loss, val_loss = nn.loss_epochs()
+    plt.plot(train_loss, label='Training Loss')
+    plt.plot(val_loss, label='Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Mean Squared Error')
+    plt.legend()
+    plt.show()
+    predictions = nn.predict(X_test.values)
+    print("Predictions:", predictions.flatten())

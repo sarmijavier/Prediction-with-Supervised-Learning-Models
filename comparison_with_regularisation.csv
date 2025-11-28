@@ -1,0 +1,4 @@
+model,mse,mae,mape
+NN1 with regularisation 2,0.005017,0.044294,64.897315
+NN1 with regularisation 3,0.005017,0.044294,64.897315
+NN1 with regularisation,0.005017,0.044294,64.897315

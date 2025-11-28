@@ -2,7 +2,18 @@ import numpy as np
 
 
 class NeuralNet:
-    def __init__(self, layers, epochs=1000, learning_rate=0.001, momentum=0.9, function='relu', validation_split=0.2):
+    def __init__(
+        self, 
+        layers, 
+        epochs=1000, 
+        learning_rate=0.001, 
+        momentum=0.9, 
+        function='relu', 
+        validation_split=0.2, 
+        use_regularisation=False,
+        l1_lambda=0.0, 
+        l2_lambda=0.0
+    ):
         self.L = len(layers) #layers
         self.n = layers.copy() #Array with number of neurons in each layer
         self.epochs = epochs
@@ -10,6 +21,10 @@ class NeuralNet:
         self.momentum = momentum
         self.function = function # activation function
         self.validation_split = validation_split   
+        self.use_regularisation = use_regularisation
+        self.l1_lambda = l1_lambda
+        self.l2_lambda = l2_lambda
+        
     
         self.h = [
             np.zeros(layers[lay]) for lay in range(self.L)
@@ -19,37 +34,29 @@ class NeuralNet:
             np.zeros(layers[lay]) for lay in range(self.L)
         ] #Array of arrays for the activations
         
-        # He initialization (correct for ReLU)
+        # He initialization
         self.w = [None] + [
             np.random.randn(layers[lay], layers[lay - 1]) * np.sqrt(2. / layers[lay - 1])
             for lay in range(1, self.L)
         ] #an array of matrices for the weights
         
-        # Small biases (don't destroy activations)
-        self.theta = [
-            np.zeros(layers[lay]) for lay in range(self.L)
+        self.theta = [None] + [ # Small biases (don't destroy activations)
+            np.random.randn(layers[lay]) * 0.01  # small random biases
+            for lay in range(1, self.L)
         ] #Array of arrays for the thresholds
         
         self.delta = [
             np.zeros(layers[lay]) for lay in range(self.L)
         ] #Array of arrays for the propagation errors
-        
-        self.d_w = [
-            np.zeros((1, 1)) if lay == 0
-            else np.zeros((layers[lay], layers[lay - 1]))
-            for lay in range(self.L)
-        ] #Array of matrices for the changes of weights
+        self.d_w = [None] + [np.zeros_like(self.w[lay]) for lay in range(1, self.L)] #Array of matrices for the changes of weights
         
         self.d_theta = [
              np.zeros(layers[lay]) for lay in range(self.L)
         ] # an array of arrays for the changes of the weights
-        
-        self.d_w_prev = [
-            np.zeros((1, 1)) if lay == 0
-            else np.zeros((layers[lay], layers[lay - 1]))
-            for lay in range(self.L)
-        ] #an array of matrices for the previous changes of the weights, used for the momentum term
-        
+
+        self.d_w_prev = [None] + [np.zeros_like(self.w[lay]) for lay in range(1, self.L)] 
+        # an array of matrices for the previous changes of the weights, used for the momentum term
+
         self.d_theta_prev = [
              np.zeros(layers[lay]) for lay in range(self.L)
         ] # an array of arrays for the previous changes of the thresholds, used for the momentum term
@@ -138,22 +145,32 @@ class NeuralNet:
         for lay in range(1, self.L):
             self.h[lay] = np.dot(self.w[lay], self.xi[lay - 1]) - self.theta[lay]
             self.xi[lay] = self.fact(self.h[lay])
-
+    
     def backpropagation(self, y: np.ndarray):
         self.delta[-1] = self.fact_derivative(self.h[-1]) * (self.xi[-1] - y)
         for lay in range(self.L - 2, 0, -1):
             self.delta[lay] = self.fact_derivative(self.h[lay]) * np.dot(self.w[lay + 1].T, self.delta[lay + 1])
-
+    
     def update_weights_and_thresholds(self):
         for lay in range(1, self.L):
             self.d_w[lay] = -self.learning_rate * np.outer(self.delta[lay], self.xi[lay - 1]) + self.momentum * self.d_w_prev[lay]
+
+            if self.use_regularisation:
+                # L1
+                if self.l1_lambda > 0:
+                    self.d_w[lay] -= self.learning_rate * (self.l1_lambda * np.sign(self.w[lay]))
+    
+                # L2
+                if self.l2_lambda > 0:
+                    self.d_w[lay] -= self.learning_rate * (self.l2_lambda * self.w[lay])
+                    
             self.d_w_prev[lay] = self.d_w[lay]
             self.w[lay] += self.d_w[lay]
         
             self.d_theta[lay] = self.learning_rate * self.delta[lay] + self.momentum * self.d_theta_prev[lay]
             self.d_theta_prev[lay] = self.d_theta[lay]
             self.theta[lay] += self.d_theta[lay]
-
+                
     def predict(self, x: np.ndarray):
         predictions = []
         for i in range(x.shape[0]):

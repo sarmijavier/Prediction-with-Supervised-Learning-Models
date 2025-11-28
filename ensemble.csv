@@ -1,0 +1,3 @@
+model,mse,mae,mape
+XGBboost,0.001269,0.018121,7.68449
+Random Forest,0.00079,0.005714,2.042532
